@@ -1,5 +1,5 @@
 service: notey-api
-frameworkVersion: '2'
+frameworkVersion: '3'
 
 provider:
   name: aws
@@ -87,6 +87,7 @@ functions:
 
 plugins:
   - serverless-iam-roles-per-function
+  - serverless-plugin-typescript
 
 resources:
   Resources:

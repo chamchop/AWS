@@ -1,3 +1,5 @@
+import { APIGatewayTokenAuthorizerEvent, Context, AuthResponse, PolicyDocument, APIGatewaySimpleAuthorizerResult } from 'aws-lambda';
+
 const { CognitoJwtVerifier } = require("aws-jwt-verify");
 const COGNITO_USERPOOL_ID = process.env.COGNITO_USERPOOL_ID;
 const COGNITO_WEB_CLIENT_ID = process.env.COGNITO_WEB_CLIENT_ID;
@@ -8,10 +10,10 @@ const jwtVerifier = CognitoJwtVerifier.create({
     clientId: COGNITO_WEB_CLIENT_ID
 })
 
-const generatePolicy = (principalId, effect, resource) => {
-    var authResponse = {};
-
+const generatePolicy = (principalId, effect, resource): AuthResponse => {
+    let authResponse = {} as AuthResponse;
     authResponse.principalId = principalId;
+    
     if (effect && resource) {
         let policyDocument = {
             Version: "2012-10-17",
@@ -34,25 +36,16 @@ const generatePolicy = (principalId, effect, resource) => {
     return authResponse;
 }
 
-exports.handler = async (event, context, callback) => {
+export const handler = async (event: APIGatewayTokenAuthorizerEvent, context: Context, callback: any) => {
     var token = event.authorizationToken;
-    console.log(token);
-
-    try {
-        const payload = await jwtVerifier.verify(token);
-        console.log(payload);
-        callback(null, generatePolicy("user", "Allow", event.methodArn));
-    } catch(err) {        
+    switch(token) {
+        case "allow":
+            callback(null, generatePolicy("user", "Allow", event.methodArn))
+            break;
+        case "deny":
+            callback(null, generatePolicy("user", "Deny", event.methodArn))
+            break;
+        default:
+            callback("Error: Invalid token");
     }
-
-    // switch(token) {
-    //     case "allow":
-    //         callback(null, generatePolicy("user", "Allow", event.methodArn))
-    //         break;
-    //     case "deny":
-    //         callback(null, generatePolicy("user", "Deny", event.methodArn))
-    //         break;
-    //     default:
-    //         callback("Error: Invalid token");
-    // }
 };
