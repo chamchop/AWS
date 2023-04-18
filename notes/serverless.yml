@@ -78,10 +78,11 @@ functions:
       - http:
           path: /notes
           method: get
-          authorizer: 
-            name: userpool_authorizer
-            type: COGNITO_USER_POOLS
-            arn: !GetAtt cognitoUserPool.Arn
+
+          # authorizer: 
+          #   name: userpool_authorizer
+          #   type: COGNITO_USER_POOLS
+          #   arn: !GetAtt cognitoUserPool.Arn
 
 # ${ssm:/notes/${self:provider.stage}/userPoolArn}
 
