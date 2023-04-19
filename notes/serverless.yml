@@ -13,7 +13,24 @@ provider:
           Action: events:PutEvents
           Resource: !GetAtt EventBus.Arn 
 
+custom:
+  apiGatewayServiceProxies:
+    - eventbridge:
+        path: /eventbridge 
+        method: post
+        source: 'fuel-app'
+        detailType: 'registration'
+        eventBusName: { Ref: EventBus }
+        cors: true
+
 functions:
+  processEventsLambda:
+    handler: functions/processEvents.handler
+    events:
+      - sqs:
+          arn: !GetAtt TargetSQS.Arn
+          batchSize: 10
+          functionResponseType: "ReportBatchItemFailures"
   putEventsLambda:
     handler: functions/putEvents.handler
     environment:
@@ -29,3 +46,5 @@ resources:
     EventBusName:
       Value: !Ref EventBus
 
+plugins:
+  - serverless-apigateway-service-proxy

@@ -11,6 +11,6 @@
   "license": "ISC",
   "devDependencies": {
     "serverless": "^3.22.0",
-    "serverless-apigateway-service-proxy": "2.2.1"
+    "serverless-apigateway-service-proxy": "^2.2.1"
   }
 }

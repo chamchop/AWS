@@ -7,6 +7,14 @@ TargetSQS:
   Type: AWS::SQS::Queue
   Properties: 
     QueueName: QR_MESSAGE_QUEUE
+    RedrivePolicy:
+      deadLetterTargetArn: !GetAtt TargetDLQ.Arn
+      maxReceiveCount: 1
+
+TargetDLQ:
+  Type: AWS::SQS::Queue
+  Properties: 
+    QueueName: QR_MESSAGE_DLQ    
 
 TargetSQSRule:
   Type: AWS::Events::Rule
