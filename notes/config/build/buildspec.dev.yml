@@ -20,7 +20,7 @@ phases:
       - serverless package --package artifact --stage dev
 artifacts:
   files:
-    - artifact/*
+    - notes/artifact/*
   name: ProjectArtifacts
 cache:
   paths:
