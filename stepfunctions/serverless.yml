@@ -1,0 +1,22 @@
+service: stepfunctions
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-west-2
+
+plugin:
+  - serverless-step-functions
+
+functions:
+  hello:
+    handler: handler.hello
+
+stepFuncions:
+  stateMachines:
+    storeCheckoutFLow:
+    name: storeCheckoutFLow
+    definition:
+      StartAt: checkInventory
