@@ -7,16 +7,49 @@ provider:
   runtime: nodejs12.x
   region: eu-west-2
 
-plugin:
+plugins:
   - serverless-step-functions
 
 functions:
-  hello:
-    handler: handler.hello
+  checkInventory:
+    handler: handler.checkInventory
+  calculateTotal:
+    handler: handler.calculateTotal
 
-stepFuncions:
+# iamRoleStatements:
+#   - Effect: Allow
+#     Action:
+#     - dynamodb:Query
+#     Resource:
+#       - Fn::GetAtt: [checkInventory, Arn]
+
+stepFunctions:
   stateMachines:
     storeCheckoutFLow:
-    name: storeCheckoutFLow
-    definition:
-      StartAt: checkInventory
+      name: storeCheckoutFLow
+      definition:
+        StartAt: checkInventory
+        States:
+          checkInventory:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [checkInventory, Arn]
+            Catch:
+              - ErrorEquals: [BookNotFound]
+                Next: BookNotFoundError
+              - ErrorEquals: [BookOutOfStock]
+                Next: BookOutOfStockError
+            Next: calculateTotal
+          calculateTotal:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [calculateTotal, Arn]
+            End: true
+          BookNotFoundError:
+            Type: Pass
+            Result: "No such book available"
+            End: true
+          BookOutOfStockError:
+            Type: Pass
+            Result: "Sorry, unavailable"
+            End: true
