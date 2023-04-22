@@ -1,0 +1,16 @@
+{
+  "name": "eb-sqs-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"all tests passed\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serverless": "^3.22.0",
+    "serverless-apigateway-service-proxy": "^2.2.1"
+  }
+}
