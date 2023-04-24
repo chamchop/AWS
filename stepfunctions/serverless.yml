@@ -6,6 +6,13 @@ provider:
   name: aws
   runtime: nodejs12.x
   region: eu-west-2
+  iamRoleStatements:
+  - Effect: Allow
+    Action: dynamodb:*
+    Resource: arn:aws:dynamodb:eu-west-2:881693386077:table/bookTable
+  - Effect: Allow
+    Action: dynamodb:*
+    Resource: arn:aws:dynamodb:eu-west-2:881693386077:table/userTable
 
 plugins:
   - serverless-step-functions
@@ -15,18 +22,17 @@ functions:
     handler: handler.checkInventory
   calculateTotal:
     handler: handler.calculateTotal
-
-# iamRoleStatements:
-#   - Effect: Allow
-#     Action:
-#     - dynamodb:Query
-#     Resource:
-#       - Fn::GetAtt: [checkInventory, Arn]
+  redeemPoints:
+    handler: handler.redeemPoints
+  billCustomer:
+    handler: handler.billCustomer
+  restoreRedeemPoints:
+    handler: handler.restoreRedeemPoints
 
 stepFunctions:
   stateMachines:
-    storeCheckoutFLow:
-      name: storeCheckoutFLow
+    storeCheckoutFlow:
+      name: storeCheckoutFlow
       definition:
         StartAt: checkInventory
         States:
@@ -34,6 +40,7 @@ stepFunctions:
             Type: Task
             Resource:
               Fn::GetAtt: [checkInventory, Arn]
+            ResultPath: "$.book"
             Catch:
               - ErrorEquals: [BookNotFound]
                 Next: BookNotFoundError
@@ -44,6 +51,36 @@ stepFunctions:
             Type: Task
             Resource:
               Fn::GetAtt: [calculateTotal, Arn]
+            ResultPath: "$.total"
+            End: isReedemNeeded
+          isReedemNeeded:
+            Type: Choice
+            Choices:
+              - Variable: $.redeem
+                BooleanEquals: true
+                Next: RedeemPoints
+            Default: BillCustomer
+          RedeemPoints:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [redeemPoints, Arn]
+            ResultPath: "$.total"
+            Catch:
+              - ErrorEquals: [States.ALL]
+                Next: RedeemPointsError
+            Next: BillCustomer
+          BillCustomer:
+            Type: Task
+            Resource: 
+              Fn::GetAtt: [calculateTotal, Arn]
+            ResultPath: "$.billingStatus"
+            Retry:
+              - ErrorEquals: [States.ALL]
+                MaxAttempts: 3
+            Catch:
+              - ErrorEquals: [States.ALL]
+                ResultPath: "$.customerBilling"
+                Next: BillingError
             End: true
           BookNotFoundError:
             Type: Pass
@@ -53,3 +90,18 @@ stepFunctions:
             Type: Pass
             Result: "Sorry, unavailable"
             End: true
+          RedeemPointsError:
+            Type: Pass
+            Result: "out of stock"
+            End: true
+          BillingError:
+            Type: Pass
+            Result: "Billing error"
+            ResultPath: "$.billingStatus"
+            Next: RestoreRedeemPoints
+          RestoreRedeemPoints:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [restoreRedeemPoints, Arn]
+            End: true
+          
